@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpErrorByCode } from '@nestjs/common/utils/http-error-by-code.util';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -32,7 +33,11 @@ export class Storage<T> extends Object {
   }
 
   public async findOne(id: string): Promise<T> {
-    return this[id];
+    const item = this[id];
+
+    if (!item) throw new HttpErrorByCode[HttpStatus.NOT_FOUND]();
+
+    return item;
   }
 
   public async create(input): Promise<T> {
@@ -45,14 +50,17 @@ export class Storage<T> extends Object {
   }
 
   public async update(id: string, input): Promise<T> {
-    const item = { ...input, id };
+    if (!this[id]) throw new HttpErrorByCode[HttpStatus.NOT_FOUND]();
 
+    const item = { ...input, id };
     this[id] = item;
 
     return item;
   }
 
   public async deleteOne(id: string): Promise<void> {
+    if (!this[id]) throw new HttpErrorByCode[HttpStatus.NOT_FOUND]();
+
     delete this[id];
   }
 }
