@@ -6,7 +6,7 @@ import { User } from './interfaces';
 
 @Injectable()
 export class UserService {
-  @Entity<User>('user')
+  @Entity<User>('user', { verbose: true })
   protected readonly db: Storage<User>;
 
   public async findAll(): Promise<User[]> {

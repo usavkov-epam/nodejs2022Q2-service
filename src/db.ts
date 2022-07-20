@@ -1,5 +1,6 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { HttpErrorByCode } from '@nestjs/common/utils/http-error-by-code.util';
+import { version } from 'os';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -18,16 +19,27 @@ export default class InMemoryDB {
     return InMemoryDB._instance;
   }
 
-  public getStorage<T>(entity: string) {
+  public getStorage<T>(entity: string, config: StorageConfig) {
     if (!this.storage[entity]) {
-      this.storage[entity] = new Storage<T>();
+      this.storage[entity] = new Storage<T>(config);
     }
 
     return this.storage[entity];
   }
 }
 
+interface StorageConfig {
+  verbose?: boolean | undefined;
+}
+
 export class Storage<T> extends Object {
+  #config: StorageConfig;
+
+  constructor(config: StorageConfig) {
+    super();
+    this.#config = config;
+  }
+
   public async findAll(): Promise<T[]> {
     return Object.values(this);
   }
@@ -42,7 +54,15 @@ export class Storage<T> extends Object {
 
   public async create(input): Promise<T> {
     const id = uuidv4();
-    const item = { id, ...input };
+    const metadata = this.#config.verbose
+      ? {
+          version: 1,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+      : {};
+
+    const item = { id, ...input, ...metadata };
 
     this[id] = item;
 
@@ -50,9 +70,18 @@ export class Storage<T> extends Object {
   }
 
   public async update(id: string, input): Promise<T> {
-    if (!this[id]) throw new HttpErrorByCode[HttpStatus.NOT_FOUND]();
+    const wantedItem = this[id];
 
-    const item = { ...this[id], ...input, id };
+    if (!wantedItem) throw new HttpErrorByCode[HttpStatus.NOT_FOUND]();
+
+    const metadata = this.#config.verbose
+      ? {
+          version: wantedItem[version] ? wantedItem[version]++ : 2,
+          updatedAt: new Date().toISOString(),
+        }
+      : {};
+
+    const item = { ...wantedItem, ...input, id, ...metadata };
     this[id] = item;
 
     return item;
@@ -65,9 +94,9 @@ export class Storage<T> extends Object {
   }
 }
 
-export function Entity<T>(value: string) {
+export function Entity<T>(value: string, config: StorageConfig = {}) {
   return function (target: any, propertyKey: string) {
-    const storage = InMemoryDB.instance.getStorage<T>(value);
+    const storage = InMemoryDB.instance.getStorage<T>(value, config);
 
     Object.defineProperty(target, propertyKey, {
       get: () => storage,
