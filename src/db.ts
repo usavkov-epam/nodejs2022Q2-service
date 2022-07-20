@@ -52,7 +52,7 @@ export class Storage<T> extends Object {
   public async update(id: string, input): Promise<T> {
     if (!this[id]) throw new HttpErrorByCode[HttpStatus.NOT_FOUND]();
 
-    const item = { ...input, id };
+    const item = { ...this[id], ...input, id };
     this[id] = item;
 
     return item;
