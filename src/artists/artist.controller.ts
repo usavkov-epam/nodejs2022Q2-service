@@ -17,31 +17,31 @@ import { Artist } from './interfaces';
 
 @Controller('artist')
 export class ArtistController {
-  constructor(private readonly albumsService: ArtistService) {}
+  constructor(private readonly artistService: ArtistService) {}
 
   @Get()
   findAll(): Promise<Artist[]> {
-    return this.albumsService.findAll();
+    return this.artistService.findAll();
   }
 
   @Get(':id')
   findById(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
   ): Promise<Artist> {
-    return this.albumsService.findById(id);
+    return this.artistService.findById(id);
   }
 
   @Post()
-  create(@Body() createAlbumDto: CreteArtistmDto): Promise<Artist> {
-    return this.albumsService.create(createAlbumDto);
+  create(@Body() createArtistDto: CreteArtistmDto): Promise<Artist> {
+    return this.artistService.create(createArtistDto);
   }
 
   @Put(':id')
   update(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
-    @Body() updateAlbumDto: UpdateArtistDto,
+    @Body() updateArtistDto: UpdateArtistDto,
   ): Promise<Artist> {
-    return this.albumsService.update(id, updateAlbumDto);
+    return this.artistService.update(id, updateArtistDto);
   }
 
   @Delete(':id')
@@ -49,6 +49,6 @@ export class ArtistController {
   delete(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
   ): Promise<void> {
-    return this.albumsService.deleteOne(id);
+    return this.artistService.deleteOne(id);
   }
 }

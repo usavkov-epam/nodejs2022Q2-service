@@ -17,23 +17,23 @@ import { Track } from './interfaces';
 
 @Controller('track')
 export class TrackController {
-  constructor(private readonly albumsService: TrackService) {}
+  constructor(private readonly trackService: TrackService) {}
 
   @Get()
   findAll(): Promise<Track[]> {
-    return this.albumsService.findAll();
+    return this.trackService.findAll();
   }
 
   @Get(':id')
   findById(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
   ): Promise<Track> {
-    return this.albumsService.findById(id);
+    return this.trackService.findById(id);
   }
 
   @Post()
   create(@Body() createAlbumDto: CreteTrackDto): Promise<Track> {
-    return this.albumsService.create(createAlbumDto);
+    return this.trackService.create(createAlbumDto);
   }
 
   @Put(':id')
@@ -41,7 +41,7 @@ export class TrackController {
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() updateAlbumDto: UpdateTrackDto,
   ): Promise<Track> {
-    return this.albumsService.update(id, updateAlbumDto);
+    return this.trackService.update(id, updateAlbumDto);
   }
 
   @Delete(':id')
@@ -49,6 +49,6 @@ export class TrackController {
   delete(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
   ): Promise<void> {
-    return this.albumsService.deleteOne(id);
+    return this.trackService.deleteOne(id);
   }
 }
