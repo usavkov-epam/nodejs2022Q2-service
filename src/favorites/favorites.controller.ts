@@ -10,7 +10,6 @@ import {
 } from '@nestjs/common';
 
 import { FavoritesService } from './favorites.service';
-import { Favorites } from './interfaces';
 
 @Controller('favs')
 export class FavoritesController {

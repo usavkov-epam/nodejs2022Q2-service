@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 
 import { Entity, Storage } from '../db';
+import { FavoritesService } from '../favorites';
 import { CreteTrackDto, UpdateTrackDto } from './dto';
 import { Track } from './interfaces';
 
@@ -8,6 +9,11 @@ import { Track } from './interfaces';
 export class TrackService {
   @Entity<Track>('track')
   protected readonly db: Storage<Track>;
+
+  constructor(
+    @Inject(forwardRef(() => FavoritesService))
+    private favoritesService: FavoritesService,
+  ) {}
 
   public async findAll(): Promise<Track[]> {
     return this.db.findAll();
@@ -26,6 +32,8 @@ export class TrackService {
   }
 
   public async deleteOne(id: string): Promise<void> {
-    return this.db.deleteOne(id);
+    return this.db.deleteOne(id).then(async () => {
+      await this.favoritesService.removeTrack(id).catch((e) => console.log(e));
+    });
   }
 }

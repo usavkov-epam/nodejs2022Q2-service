@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { HttpErrorByCode } from '@nestjs/common/utils/http-error-by-code.util';
-import { version } from 'os';
+import { omit } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -41,7 +41,7 @@ export class Storage<T> extends Object {
   }
 
   public async findAll(): Promise<T[]> {
-    return Object.values(this);
+    return Object.values(this).map((value) => omit(value, 'password'));
   }
 
   public async findOne(id: string): Promise<T> {
@@ -49,7 +49,7 @@ export class Storage<T> extends Object {
 
     if (!item) throw new HttpErrorByCode[HttpStatus.NOT_FOUND]();
 
-    return item;
+    return omit(item, 'password');
   }
 
   public async create(input): Promise<T> {
@@ -57,8 +57,8 @@ export class Storage<T> extends Object {
     const metadata = this.#config.verbose
       ? {
           version: 1,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          createdAt: +new Date(),
+          updatedAt: +new Date(),
         }
       : {};
 
@@ -66,7 +66,7 @@ export class Storage<T> extends Object {
 
     this[id] = item;
 
-    return item;
+    return omit(item, 'password');
   }
 
   public async update(id: string, input): Promise<T> {
@@ -76,15 +76,15 @@ export class Storage<T> extends Object {
 
     const metadata = this.#config.verbose
       ? {
-          version: wantedItem[version] ? wantedItem[version]++ : 2,
-          updatedAt: new Date().toISOString(),
+          version: wantedItem.version++,
+          updatedAt: +new Date(),
         }
       : {};
 
     const item = { ...wantedItem, ...input, id, ...metadata };
     this[id] = item;
 
-    return item;
+    return omit(item, 'password');
   }
 
   public async deleteOne(id: string): Promise<void> {
