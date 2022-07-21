@@ -33,7 +33,7 @@ export class TrackService {
 
   public async deleteOne(id: string): Promise<void> {
     return this.db.deleteOne(id).then(async () => {
-      await this.favoritesService.removeTrack(id).catch((e) => console.log(e));
+      await this.favoritesService.removeTrack(id).catch(() => console.log());
     });
   }
 }

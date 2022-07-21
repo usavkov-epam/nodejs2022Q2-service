@@ -97,56 +97,50 @@ export class FavoritesService {
   }
 
   public async removeAlbum(id: string): Promise<void> {
-    return this.albumsService.findById(id).then(({ id }) => {
-      const isExist = Boolean(
-        this.favorites.albums.find((albumId) => albumId === id),
+    const isExist = Boolean(
+      this.favorites.albums.find((albumId) => albumId === id),
+    );
+
+    if (!isExist)
+      throw new HttpException(
+        'Album is not in favorites',
+        HttpStatus.NOT_FOUND,
       );
 
-      if (!isExist)
-        throw new HttpException(
-          'Album is not in favorites',
-          HttpStatus.NOT_FOUND,
-        );
-
-      this.favorites.albums = this.favorites.albums.filter(
-        (albumId) => id !== albumId,
-      );
-    });
+    this.favorites.albums = this.favorites.albums.filter(
+      (albumId) => id !== albumId,
+    );
   }
 
   public async removeArtist(id: string): Promise<void> {
-    return this.artistService.findById(id).then(({ id }) => {
-      const isExist = Boolean(
-        this.favorites.artists.find((artistId) => artistId === id),
+    const isExist = Boolean(
+      this.favorites.artists.find((artistId) => artistId === id),
+    );
+
+    if (!isExist)
+      throw new HttpException(
+        'Artist is not in favorites',
+        HttpStatus.NOT_FOUND,
       );
 
-      if (!isExist)
-        throw new HttpException(
-          'Artist is not in favorites',
-          HttpStatus.NOT_FOUND,
-        );
-
-      this.favorites.artists = this.favorites.artists.filter(
-        (artistId) => id !== artistId,
-      );
-    });
+    this.favorites.artists = this.favorites.artists.filter(
+      (artistId) => id !== artistId,
+    );
   }
 
   public async removeTrack(id: string): Promise<void> {
-    return this.trackService.findById(id).then(({ id }) => {
-      const isExist = Boolean(
-        this.favorites.tracks.find((trackId) => trackId === id),
+    const isExist = Boolean(
+      this.favorites.tracks.find((trackId) => trackId === id),
+    );
+
+    if (!isExist)
+      throw new HttpException(
+        'Track is not in favorites',
+        HttpStatus.NOT_FOUND,
       );
 
-      if (!isExist)
-        throw new HttpException(
-          'Track is not in favorites',
-          HttpStatus.NOT_FOUND,
-        );
-
-      this.favorites.tracks = this.favorites.tracks.filter(
-        (trackId) => id !== trackId,
-      );
-    });
+    this.favorites.tracks = this.favorites.tracks.filter(
+      (trackId) => id !== trackId,
+    );
   }
 }

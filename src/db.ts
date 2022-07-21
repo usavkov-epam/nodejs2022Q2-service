@@ -76,13 +76,15 @@ export class Storage<T> extends Object {
 
     const metadata = this.#config.verbose
       ? {
-          version: wantedItem.version++,
+          version: wantedItem.version ? ++wantedItem.version : 2,
           updatedAt: +new Date(),
         }
       : {};
 
     const item = { ...wantedItem, ...input, id, ...metadata };
     this[id] = item;
+
+    console.log('item', item);
 
     return omit(item, 'password');
   }

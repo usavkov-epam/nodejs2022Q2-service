@@ -53,15 +53,15 @@ export class ArtistService {
         albums.map((album) =>
           this.albumService.update(album.id, { artistId: null }),
         ),
-      ).catch((e) => console.log(e));
+      ).catch(() => console.log());
 
       await Promise.all(
         tracks.map((track) =>
           this.trackService.update(track.id, { artistId: null }),
         ),
-      ).catch((e) => console.log(e));
+      ).catch(() => console.log());
 
-      await this.favoritesService.removeArtist(id).catch((e) => console.log(e));
+      await this.favoritesService.removeArtist(id).catch(() => console.log());
     });
   }
 }

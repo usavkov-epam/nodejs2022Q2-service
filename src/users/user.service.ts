@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { Entity, Storage } from '../db';
 import { CreteUserDto, UpdateUserDto } from './dto';
@@ -18,10 +18,12 @@ export class UserService {
   }
 
   public async create(input: CreteUserDto): Promise<User> {
+    if (Object.values(input).length < 1) throw new BadRequestException();
     return this.db.create(input);
   }
 
   public async update(id: string, input: UpdateUserDto): Promise<User> {
+    if (Object.values(input).length < 1) throw new BadRequestException();
     return this.db.update(id, input);
   }
 
