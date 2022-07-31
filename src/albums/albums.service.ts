@@ -62,12 +62,9 @@ export class AlbumsService {
       .then((_tracks) => _tracks.filter(({ albumId }) => id === albumId));
 
     await Promise.all(
-      tracks.map(
-        async (track) =>
-          await this.trackService.update(track.id, { albumId: null }),
+      tracks.map((track) =>
+        this.trackService.update(track.id, { albumId: null }),
       ),
     );
-
-    await this.favoritesService.removeAlbum(id);
   }
 }

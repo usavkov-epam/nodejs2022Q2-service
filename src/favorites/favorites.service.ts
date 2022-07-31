@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { uniq } from 'lodash';
 
 import { AlbumsService } from '../albums';
 import { ArtistService } from '../artists';
@@ -31,7 +32,16 @@ export class FavoritesService {
   ) {}
 
   public async findAllIds() {
-    return this.favoritesRepository.findOne({ where: {} });
+    const ids = await this.favoritesRepository.findOne({ where: {} });
+
+    return (
+      ids ||
+      ({
+        albums: [],
+        artists: [],
+        tracks: [],
+      } as FavoritesEntity)
+    );
   }
 
   public async findAll() {
@@ -40,20 +50,26 @@ export class FavoritesService {
     if (favorites) {
       const albums = await Promise.all(
         favorites.albums.map((id) => this.albumsService.findById(id)),
-      );
+      ).catch(() => []);
 
       const artists = await Promise.all(
         favorites.artists.map((id) => this.artistService.findById(id)),
-      );
+      ).catch(() => []);
 
       const tracks = await Promise.all(
         favorites.tracks.map((id) => this.trackService.findById(id)),
-      );
+      ).catch(() => []);
 
       return {
         albums,
         artists,
         tracks,
+      };
+
+      return {
+        albums: [],
+        artists: [],
+        tracks: [],
       };
     }
 
@@ -70,12 +86,9 @@ export class FavoritesService {
       .findById(id)
       .then(async ({ id }) => {
         const favorites = await this.findAllIds();
-        const alreadyExist = favorites.albums.includes(id);
 
-        if (!alreadyExist) {
-          favorites.albums.push(id);
-          await this.favoritesRepository.save(favorites);
-        }
+        favorites.albums = uniq([...favorites.albums, id]);
+        await this.favoritesRepository.save(favorites);
       })
       .catch(() => {
         throw new UnprocessableEntityException();
@@ -87,12 +100,9 @@ export class FavoritesService {
       .findById(id)
       .then(async ({ id }) => {
         const favorites = await this.findAllIds();
-        const alreadyExist = favorites.artists.includes(id);
 
-        if (!alreadyExist) {
-          favorites.artists.push(id);
-          await this.favoritesRepository.save(favorites);
-        }
+        favorites.artists = uniq([...favorites.artists, id]);
+        await this.favoritesRepository.save(favorites);
       })
       .catch(() => {
         throw new UnprocessableEntityException();
@@ -104,12 +114,9 @@ export class FavoritesService {
       .findById(id)
       .then(async ({ id }) => {
         const favorites = await this.findAllIds();
-        const alreadyExist = favorites.tracks.includes(id);
 
-        if (!alreadyExist) {
-          favorites.tracks.push(id);
-          await this.favoritesRepository.save(favorites);
-        }
+        favorites.tracks = uniq([...favorites.tracks, id]);
+        await this.favoritesRepository.save(favorites);
       })
       .catch(() => {
         throw new UnprocessableEntityException();
@@ -118,14 +125,6 @@ export class FavoritesService {
 
   public async removeAlbum(id: string): Promise<void> {
     const favorites = await this.findAllIds();
-    const isExist = favorites.albums.includes(id);
-
-    if (!isExist)
-      throw new HttpException(
-        'Album is not in favorites',
-        HttpStatus.NOT_FOUND,
-      );
-
     const indx = favorites.albums.findIndex((albumId) => albumId === id);
 
     delete favorites.albums[indx];
@@ -135,14 +134,6 @@ export class FavoritesService {
 
   public async removeArtist(id: string): Promise<void> {
     const favorites = await this.findAllIds();
-    const isExist = favorites.artists.includes(id);
-
-    if (!isExist)
-      throw new HttpException(
-        'Artist is not in favorites',
-        HttpStatus.NOT_FOUND,
-      );
-
     const indx = favorites.artists.findIndex((artistId) => artistId === id);
 
     delete favorites.artists[indx];
@@ -152,14 +143,6 @@ export class FavoritesService {
 
   public async removeTrack(id: string): Promise<void> {
     const favorites = await this.findAllIds();
-    const isExist = favorites.tracks.includes(id);
-
-    if (!isExist)
-      throw new HttpException(
-        'Track is not in favorites',
-        HttpStatus.NOT_FOUND,
-      );
-
     const indx = favorites.tracks.findIndex((trackId) => trackId === id);
 
     delete favorites.tracks[indx];

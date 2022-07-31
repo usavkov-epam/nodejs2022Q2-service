@@ -16,11 +16,12 @@ export class UserEntity {
   @Column()
   login: string;
 
-  @Exclude()
   @Column()
+  @Exclude()
   password: string;
 
   @VersionColumn({ default: 1 })
+  @Transform(({ value }) => Number(value))
   version: number;
 
   @Transform(({ value }) => Number(new Date(value)))

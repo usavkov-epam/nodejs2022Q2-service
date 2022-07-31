@@ -52,7 +52,5 @@ export class TrackService {
     const result = await this.trackRepository.delete(id);
 
     if (result.affected === 0) throw new NotFoundById('Track', id);
-
-    await this.favoritesService.removeTrack(id);
   }
 }

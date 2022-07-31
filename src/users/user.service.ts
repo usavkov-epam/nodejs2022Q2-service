@@ -1,6 +1,11 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { omit } from 'lodash';
 
 import { NotFoundById } from '../helpers';
 import { CreteUserDto, UpdateUserDto } from './dto';
@@ -17,7 +22,7 @@ export class UserService {
   public async findAll(): Promise<User[]> {
     const users = await this.userRepository.find();
 
-    return users;
+    return users.map((user) => omit(user, 'password'));
   }
 
   public async findById(id: string): Promise<User> {
@@ -25,7 +30,7 @@ export class UserService {
 
     if (!user) throw new NotFoundById('User', id);
 
-    return user;
+    return omit(user, 'password');
   }
 
   public async create(input: CreteUserDto): Promise<User> {
@@ -33,19 +38,31 @@ export class UserService {
 
     const createdUser = this.userRepository.create(input);
 
-    return this.userRepository.save(createdUser);
+    await this.userRepository.save(createdUser);
+
+    return omit(createdUser, 'password');
   }
 
   public async update(id: string, input: UpdateUserDto): Promise<User> {
     const updatedUser = await this.userRepository.findOne({ where: { id } });
 
     if (!updatedUser) throw new NotFoundById('User', id);
-    if (input.password === updatedUser.password)
+    if (
+      !input.newPassword ||
+      !input.oldPassword ||
+      input.newPassword === input.oldPassword
+    )
       throw new BadRequestException();
+    if (input.oldPassword !== updatedUser.password) new ForbiddenException();
 
-    Object.assign(updatedUser, input);
+    Object.assign(updatedUser, {
+      ...omit(input, ['newPassword', 'oldPassword']),
+      password: input.newPassword,
+    });
 
-    return this.userRepository.save(updatedUser);
+    await this.userRepository.save(updatedUser);
+
+    return omit(updatedUser, 'password');
   }
 
   public async deleteOne(id: string): Promise<void> {
