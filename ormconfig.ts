@@ -22,4 +22,5 @@ export default {
   entities: ['dist/**/entities/*.js'],
   migrations: ['dist/**/migration/*.js'],
   migrationsRun: true,
+  migrationsTableName: 'migration',
 } as DataSourceOptions;
