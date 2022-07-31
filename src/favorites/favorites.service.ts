@@ -6,20 +6,16 @@ import {
   Injectable,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 import { AlbumsService } from '../albums';
 import { ArtistService } from '../artists';
 import { TrackService } from '../tracks';
-import { Favorites } from './interfaces';
+import { FavoritesEntity } from './entities';
 
 @Injectable()
 export class FavoritesService {
-  private favorites: Favorites = {
-    artists: [],
-    albums: [],
-    tracks: [],
-  };
-
   constructor(
     @Inject(forwardRef(() => AlbumsService))
     private albumsService: AlbumsService,
@@ -29,37 +25,57 @@ export class FavoritesService {
 
     @Inject(forwardRef(() => TrackService))
     private trackService: TrackService,
+
+    @InjectRepository(FavoritesEntity)
+    private favoritesRepository: Repository<FavoritesEntity>,
   ) {}
 
+  public async findAllIds() {
+    return this.favoritesRepository.findOne({ where: {} });
+  }
+
   public async findAll() {
-    const albums = await Promise.all(
-      this.favorites.albums.map((id) => this.albumsService.findById(id)),
-    );
+    const favorites = await this.findAllIds();
 
-    const artists = await Promise.all(
-      this.favorites.artists.map((id) => this.artistService.findById(id)),
-    );
+    if (favorites) {
+      const albums = await Promise.all(
+        favorites.albums.map((id) => this.albumsService.findById(id)),
+      );
 
-    const tracks = await Promise.all(
-      this.favorites.tracks.map((id) => this.trackService.findById(id)),
-    );
+      const artists = await Promise.all(
+        favorites.artists.map((id) => this.artistService.findById(id)),
+      );
 
-    return {
-      albums,
-      artists,
-      tracks,
-    };
+      const tracks = await Promise.all(
+        favorites.tracks.map((id) => this.trackService.findById(id)),
+      );
+
+      return {
+        albums,
+        artists,
+        tracks,
+      };
+    }
+
+    const createdFavorites = this.favoritesRepository.create({
+      artists: [],
+      albums: [],
+      tracks: [],
+    });
+    return this.favoritesRepository.save(createdFavorites);
   }
 
   public async addAlbum(id: string): Promise<void> {
     return this.albumsService
       .findById(id)
-      .then(({ id }) => {
-        const alreadyExist = this.favorites.albums.some(
-          (albumId) => albumId === id,
-        );
+      .then(async ({ id }) => {
+        const favorites = await this.findAllIds();
+        const alreadyExist = favorites.albums.includes(id);
 
-        if (!alreadyExist) this.favorites.albums.push(id);
+        if (!alreadyExist) {
+          favorites.albums.push(id);
+          await this.favoritesRepository.save(favorites);
+        }
       })
       .catch(() => {
         throw new UnprocessableEntityException();
@@ -69,12 +85,14 @@ export class FavoritesService {
   public async addArtist(id: string): Promise<void> {
     return this.artistService
       .findById(id)
-      .then(({ id }) => {
-        const alreadyExist = this.favorites.artists.some(
-          (artistId) => artistId === id,
-        );
+      .then(async ({ id }) => {
+        const favorites = await this.findAllIds();
+        const alreadyExist = favorites.artists.includes(id);
 
-        if (!alreadyExist) this.favorites.artists.push(id);
+        if (!alreadyExist) {
+          favorites.artists.push(id);
+          await this.favoritesRepository.save(favorites);
+        }
       })
       .catch(() => {
         throw new UnprocessableEntityException();
@@ -84,12 +102,14 @@ export class FavoritesService {
   public async addTrack(id: string): Promise<void> {
     return this.trackService
       .findById(id)
-      .then(({ id }) => {
-        const alreadyExist = this.favorites.tracks.some(
-          (trackId) => trackId === id,
-        );
+      .then(async ({ id }) => {
+        const favorites = await this.findAllIds();
+        const alreadyExist = favorites.tracks.includes(id);
 
-        if (!alreadyExist) this.favorites.tracks.push(id);
+        if (!alreadyExist) {
+          favorites.tracks.push(id);
+          await this.favoritesRepository.save(favorites);
+        }
       })
       .catch(() => {
         throw new UnprocessableEntityException();
@@ -97,9 +117,8 @@ export class FavoritesService {
   }
 
   public async removeAlbum(id: string): Promise<void> {
-    const isExist = Boolean(
-      this.favorites.albums.find((albumId) => albumId === id),
-    );
+    const favorites = await this.findAllIds();
+    const isExist = favorites.albums.includes(id);
 
     if (!isExist)
       throw new HttpException(
@@ -107,15 +126,16 @@ export class FavoritesService {
         HttpStatus.NOT_FOUND,
       );
 
-    this.favorites.albums = this.favorites.albums.filter(
-      (albumId) => id !== albumId,
-    );
+    const indx = favorites.albums.findIndex((albumId) => albumId === id);
+
+    delete favorites.albums[indx];
+
+    await this.favoritesRepository.save(favorites);
   }
 
   public async removeArtist(id: string): Promise<void> {
-    const isExist = Boolean(
-      this.favorites.artists.find((artistId) => artistId === id),
-    );
+    const favorites = await this.findAllIds();
+    const isExist = favorites.artists.includes(id);
 
     if (!isExist)
       throw new HttpException(
@@ -123,15 +143,16 @@ export class FavoritesService {
         HttpStatus.NOT_FOUND,
       );
 
-    this.favorites.artists = this.favorites.artists.filter(
-      (artistId) => id !== artistId,
-    );
+    const indx = favorites.artists.findIndex((artistId) => artistId === id);
+
+    delete favorites.artists[indx];
+
+    await this.favoritesRepository.save(favorites);
   }
 
   public async removeTrack(id: string): Promise<void> {
-    const isExist = Boolean(
-      this.favorites.tracks.find((trackId) => trackId === id),
-    );
+    const favorites = await this.findAllIds();
+    const isExist = favorites.tracks.includes(id);
 
     if (!isExist)
       throw new HttpException(
@@ -139,8 +160,10 @@ export class FavoritesService {
         HttpStatus.NOT_FOUND,
       );
 
-    this.favorites.tracks = this.favorites.tracks.filter(
-      (trackId) => id !== trackId,
-    );
+    const indx = favorites.tracks.findIndex((trackId) => trackId === id);
+
+    delete favorites.tracks[indx];
+
+    await this.favoritesRepository.save(favorites);
   }
 }
