@@ -57,18 +57,17 @@ export class AlbumsService {
 
     if (result.affected === 0) throw new NotFoundById('Album', id);
 
-    //   .then(async () => {
-    //   const tracks = await this.trackService
-    //     .findAll()
-    //     .then((_tracks) => _tracks.filter(({ albumId }) => id === albumId));
+    const tracks = await this.trackService
+      .findAll()
+      .then((_tracks) => _tracks.filter(({ albumId }) => id === albumId));
 
-    //   await Promise.all(
-    //     tracks.map((track) =>
-    //       this.trackService.update(track.id, { albumId: null }),
-    //     ),
-    //   ).catch(() => console.log());
+    await Promise.all(
+      tracks.map(
+        async (track) =>
+          await this.trackService.update(track.id, { albumId: null }),
+      ),
+    );
 
-    //   await this.favoritesService.removeAlbum(id).catch(() => console.log());
-    // });
+    await this.favoritesService.removeAlbum(id);
   }
 }

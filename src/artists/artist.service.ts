@@ -63,28 +63,28 @@ export class ArtistService {
 
     if (result.affected === 0) throw new NotFoundById('Artist', id);
 
-    // .then(async () => {
-    //   const albums = await this.albumService
-    //     .findAll()
-    //     .then((_albums) => _albums.filter(({ artistId }) => id === artistId));
+    const albums = await this.albumService
+      .findAll()
+      .then((_albums) => _albums.filter(({ artistId }) => id === artistId));
 
-    //   const tracks = await this.trackService
-    //     .findAll()
-    //     .then((_tracks) => _tracks.filter(({ artistId }) => id === artistId));
+    const tracks = await this.trackService
+      .findAll()
+      .then((_tracks) => _tracks.filter(({ artistId }) => id === artistId));
 
-    //   await Promise.all(
-    //     albums.map((album) =>
-    //       this.albumService.update(album.id, { artistId: null }),
-    //     ),
-    //   ).catch(() => console.log());
+    await Promise.all(
+      albums.map(
+        async (album) =>
+          await this.albumService.update(album.id, { artistId: null }),
+      ),
+    );
 
-    //   await Promise.all(
-    //     tracks.map((track) =>
-    //       this.trackService.update(track.id, { artistId: null }),
-    //     ),
-    //   ).catch(() => console.log());
+    await Promise.all(
+      tracks.map(
+        async (track) =>
+          await this.trackService.update(track.id, { artistId: null }),
+      ),
+    );
 
-    //   await this.favoritesService.removeArtist(id).catch(() => console.log());
-    // });
+    await this.favoritesService.removeArtist(id);
   }
 }

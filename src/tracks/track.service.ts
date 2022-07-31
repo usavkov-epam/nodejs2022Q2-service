@@ -53,8 +53,6 @@ export class TrackService {
 
     if (result.affected === 0) throw new NotFoundById('Track', id);
 
-    // .then(async () => {
-    //   await this.favoritesService.removeTrack(id).catch(() => console.log());
-    // });
+    await this.favoritesService.removeTrack(id);
   }
 }
