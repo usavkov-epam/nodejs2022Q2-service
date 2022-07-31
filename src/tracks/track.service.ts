@@ -1,39 +1,60 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
-import { Entity, Storage } from '../db';
 import { FavoritesService } from '../favorites';
+import { NotFoundById } from '../helpers';
 import { CreteTrackDto, UpdateTrackDto } from './dto';
+import { TrackEntity } from './entities';
 import { Track } from './interfaces';
 
 @Injectable()
 export class TrackService {
-  @Entity<Track>('track')
-  protected readonly db: Storage<Track>;
-
   constructor(
     @Inject(forwardRef(() => FavoritesService))
     private favoritesService: FavoritesService,
+
+    @InjectRepository(TrackEntity)
+    private trackRepository: Repository<TrackEntity>,
   ) {}
 
   public async findAll(): Promise<Track[]> {
-    return this.db.findAll();
+    const tracks = await this.trackRepository.find();
+
+    return tracks;
   }
 
   public async findById(id: string): Promise<Track> {
-    return this.db.findOne(id);
+    const track = await this.trackRepository.findOne({ where: { id } });
+
+    if (!track) throw new NotFoundById('Track', id);
+
+    return track;
   }
 
   public async create(input: CreteTrackDto): Promise<Track> {
-    return this.db.create(input);
+    const createdTrack = this.trackRepository.create(input);
+
+    return this.trackRepository.save(createdTrack);
   }
 
   public async update(id: string, input: UpdateTrackDto): Promise<Track> {
-    return this.db.update(id, input);
+    const updatedTrack = await this.trackRepository.findOne({ where: { id } });
+
+    if (!updatedTrack) throw new NotFoundById('Track', id);
+
+    Object.assign(updatedTrack, input);
+
+    return this.trackRepository.save(updatedTrack);
   }
 
   public async deleteOne(id: string): Promise<void> {
-    return this.db.deleteOne(id).then(async () => {
-      await this.favoritesService.removeTrack(id).catch(() => console.log());
-    });
+    const result = await this.trackRepository.delete(id);
+
+    if (result.affected === 0) throw new NotFoundById('Track', id);
+
+    // .then(async () => {
+    //   await this.favoritesService.removeTrack(id).catch(() => console.log());
+    // });
   }
 }
