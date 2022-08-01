@@ -32,53 +32,42 @@ export class FavoritesService {
   ) {}
 
   public async findAllIds() {
-    const ids = await this.favoritesRepository.findOne({ where: {} });
+    const favorites = await this.favoritesRepository.findOne({ where: {} });
 
-    return (
-      ids ||
-      ({
-        albums: [],
+    if (!favorites) {
+      const createdFavorites = this.favoritesRepository.create({
         artists: [],
+        albums: [],
         tracks: [],
-      } as FavoritesEntity)
-    );
+      });
+      await this.favoritesRepository.save(createdFavorites);
+
+      return createdFavorites;
+    }
+
+    return favorites;
   }
 
   public async findAll() {
     const favorites = await this.findAllIds();
 
-    if (favorites) {
-      const albums = await Promise.all(
-        favorites.albums.map((id) => this.albumsService.findById(id)),
-      ).catch(() => []);
+    const albums = await Promise.all(
+      favorites.albums.map((id) => this.albumsService.findById(id)),
+    ).catch(() => []);
 
-      const artists = await Promise.all(
-        favorites.artists.map((id) => this.artistService.findById(id)),
-      ).catch(() => []);
+    const artists = await Promise.all(
+      favorites.artists.map((id) => this.artistService.findById(id)),
+    ).catch(() => []);
 
-      const tracks = await Promise.all(
-        favorites.tracks.map((id) => this.trackService.findById(id)),
-      ).catch(() => []);
+    const tracks = await Promise.all(
+      favorites.tracks.map((id) => this.trackService.findById(id)),
+    ).catch(() => []);
 
-      return {
-        albums,
-        artists,
-        tracks,
-      };
-
-      return {
-        albums: [],
-        artists: [],
-        tracks: [],
-      };
-    }
-
-    const createdFavorites = this.favoritesRepository.create({
-      artists: [],
-      albums: [],
-      tracks: [],
-    });
-    return this.favoritesRepository.save(createdFavorites);
+    return {
+      albums,
+      artists,
+      tracks,
+    };
   }
 
   public async addAlbum(id: string): Promise<void> {

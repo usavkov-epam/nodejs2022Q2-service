@@ -24,11 +24,19 @@ export class UserEntity {
   @Transform(({ value }) => Number(value))
   version: number;
 
-  @Transform(({ value }) => Number(new Date(value)))
-  @CreateDateColumn()
+  @CreateDateColumn({
+    transformer: {
+      to: (value: Date) => value,
+      from: (value: Date) => value.getTime(),
+    },
+  })
   createdAt: number;
 
-  @Transform(({ value }) => Number(new Date(value)))
-  @UpdateDateColumn()
+  @UpdateDateColumn({
+    transformer: {
+      to: (value: Date) => value,
+      from: (value: Date) => value.getTime(),
+    },
+  })
   updatedAt: number;
 }
