@@ -13,6 +13,8 @@ import { AppModule } from './app.module';
 
 const PORT = process.env.PORT || 4000;
 
+// TODO: implement logger
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
