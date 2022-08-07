@@ -14,6 +14,7 @@ import { AppModule } from './app.module';
 const PORT = process.env.PORT || 4000;
 
 // TODO: implement logger
+// TODO: implement authentication
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
